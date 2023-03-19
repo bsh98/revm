@@ -49,7 +49,7 @@ async fn main() -> Result<()> {
     let encoded = abi.encode("getReserves", ())?;
 
     // initialize new EthersDB
-    let mut ethersdb = EthersDB::new(Arc::clone(&client), None).unwrap();
+    let ethersdb = EthersDB::new(Arc::clone(&client), None).unwrap();
 
     // query basic properties of an account incl bytecode
     let acc_info = ethersdb.basic(pool_address).unwrap().unwrap();

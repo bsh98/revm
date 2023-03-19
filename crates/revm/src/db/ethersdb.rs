@@ -1,5 +1,5 @@
 use crate::primitives::{AccountInfo, Bytecode, B160, B256, KECCAK_EMPTY, U256};
-use crate::Database;
+use crate::db::DatabaseRef;
 use ethers_core::types::{BlockId, H160 as eH160, H256, U64 as eU64};
 use ethers_providers::Middleware;
 use std::sync::Arc;
@@ -50,13 +50,13 @@ where
     }
 }
 
-impl<M> Database for EthersDB<M>
+impl<M> DatabaseRef for EthersDB<M>
 where
     M: Middleware,
 {
     type Error = ();
 
-    fn basic(&mut self, address: B160) -> Result<Option<AccountInfo>, Self::Error> {
+    fn basic(&self, address: B160) -> Result<Option<AccountInfo>, Self::Error> {
         let add = eH160::from(address.0);
 
         let f = async {
@@ -83,12 +83,12 @@ where
         )))
     }
 
-    fn code_by_hash(&mut self, _code_hash: B256) -> Result<Bytecode, Self::Error> {
+    fn code_by_hash(&self, _code_hash: B256) -> Result<Bytecode, Self::Error> {
         panic!("Should not be called. Code is already loaded");
         // not needed because we already load code with basic info
     }
 
-    fn storage(&mut self, address: B160, index: U256) -> Result<U256, Self::Error> {
+    fn storage(&self, address: B160, index: U256) -> Result<U256, Self::Error> {
         let add = eH160::from(address.0);
         let index = H256::from(index.to_be_bytes());
         let f = async {
@@ -102,7 +102,7 @@ where
         Ok(self.block_on(f))
     }
 
-    fn block_hash(&mut self, number: U256) -> Result<B256, Self::Error> {
+    fn block_hash(&self, number: U256) -> Result<B256, Self::Error> {
         // saturate usize
         if number > U256::from(u64::MAX) {
             return Ok(KECCAK_EMPTY);
@@ -136,7 +136,7 @@ mod tests {
         .unwrap();
         let client = Arc::new(client);
 
-        let mut ethersdb = EthersDB::new(
+        let ethersdb = EthersDB::new(
             Arc::clone(&client), // public infura mainnet
             Some(16148323),
         )
@@ -162,7 +162,7 @@ mod tests {
         .unwrap();
         let client = Arc::new(client);
 
-        let mut ethersdb = EthersDB::new(
+        let ethersdb = EthersDB::new(
             Arc::clone(&client), // public infura mainnet
             Some(16148323),
         )
@@ -193,7 +193,7 @@ mod tests {
         .unwrap();
         let client = Arc::new(client);
 
-        let mut ethersdb = EthersDB::new(
+        let ethersdb = EthersDB::new(
             Arc::clone(&client), // public infura mainnet
             None,
         )
